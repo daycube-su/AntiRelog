@@ -120,11 +120,10 @@
             <version>1.19.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
-        <!-- maven repo is dead, do `mvn clean install` your self https://github.com/Leymooo/AnnotatedYAMLConfiguration -->
         <dependency>
-            <groupId>ru.leymooo</groupId>
+            <groupId>com.github.Leymooo.AnnotatedYAMLConfiguration</groupId>
             <artifactId>AnnotatedYAMLConfiguration-bukkit</artifactId>
-            <version>1.2-SNAPSHOT</version>
+            <version>2cbe5f9fa3</version>
         </dependency>
         <dependency>
             <groupId>net.essentialsx</groupId>
