@@ -10,7 +10,6 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.*;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -22,19 +21,16 @@ import ru.leymooo.antirelog.util.VersionUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PvPListener implements Listener {
 
     private final static String META_KEY = "ar-f-shooter";
-
     private final Plugin plugin;
     private final PvPManager pvpManager;
     private final Messages messages;
     private final Settings settings;
     private final Map<Player, AtomicInteger> allowedTeleports = new HashMap<>();
-
 
     public PvPListener(Plugin plugin, PvPManager pvpManager, Settings settings) {
         this.plugin = plugin;
@@ -44,7 +40,7 @@ public class PvPListener implements Listener {
         plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             allowedTeleports.values().forEach(ai -> ai.set(ai.get() + 1));
             allowedTeleports.values().removeIf(ai -> ai.get() >= 5);
-        }, 1l, 1l);
+        }, 1, 1);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -80,10 +76,9 @@ public class PvPListener implements Listener {
         }
     }
 
-
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPotionSplash(PotionSplashEvent e) {
-        if (e.getPotion() != null && e.getPotion().getShooter() instanceof Player) {
+        if (e.getPotion().getShooter() instanceof Player) {
             Player shooter = (Player) e.getPotion().getShooter();
             for (LivingEntity en : e.getAffectedEntities()) {
                 if (en.getType() == EntityType.PLAYER && en != shooter) {
@@ -98,23 +93,25 @@ public class PvPListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onTeleport(PlayerTeleportEvent ev) {
+    public void onTeleport(PlayerTeleportEvent event) {
 
-        if (settings.isDisableTeleportsInPvp() && pvpManager.isInPvP(ev.getPlayer())) {
-            if (allowedTeleports.containsKey(ev.getPlayer())) { //allow all teleport in 4-5 ticks after chorus or ender pearl
+        if (settings.isDisableTeleportsInPvp() && pvpManager.isInPvP(event.getPlayer())) {
+            if (allowedTeleports.containsKey(event.getPlayer())) { //allow all teleport in 4-5 ticks after chorus or ender pearl
                 return;
             }
 
-            if ((VersionUtils.isVersion(9) && ev.getCause() == TeleportCause.CHORUS_FRUIT) || ev.getCause() == TeleportCause.ENDER_PEARL) {
-                allowedTeleports.put(ev.getPlayer(), new AtomicInteger(0));
+            if ((VersionUtils.isVersion(9) && event.getCause() == TeleportCause.CHORUS_FRUIT) || event.getCause() == TeleportCause.ENDER_PEARL) {
+                allowedTeleports.put(event.getPlayer(), new AtomicInteger(0));
                 return;
             }
-            if (ev.getFrom().getWorld() != ev.getTo().getWorld()) {
-                ev.setCancelled(true);
+            if (event.getTo() == null)
+                return;
+            if (event.getFrom().getWorld() != event.getTo().getWorld()) {
+                event.setCancelled(true);
                 return;
             }
-            if (ev.getFrom().distanceSquared(ev.getTo()) > 100) { //10 = 10 blocks
-                ev.setCancelled(true);
+            if (event.getFrom().distanceSquared(event.getTo()) > 100) { //10 = 10 blocks
+                event.setCancelled(true);
             }
         }
     }
@@ -127,13 +124,13 @@ public class PvPListener implements Listener {
                 return;
             }
             e.setCancelled(true);
-            String message = Utils.color(messages.getCommandsDisabled());
+            String message = messages.getCommandsDisabled();
             if (!message.isEmpty()) {
-                e.getPlayer().sendMessage(Utils.replaceTime(message, pvpManager.getTimeRemainingInPvP(e.getPlayer())));
+                message = Utils.replaceTime(message, pvpManager.getTimeRemainingInPvP(e.getPlayer()));
+                Utils.sendMessage(e.getPlayer(), message);
             }
         }
     }
-
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onKick(PlayerKickEvent e) {
@@ -152,9 +149,6 @@ public class PvPListener implements Listener {
 
         if (settings.getKickMessages().isEmpty()) {
             kickedInPvp(player);
-            return;
-        }
-        if (e.getReason() == null) {
             return;
         }
         String reason = ChatColor.stripColor(e.getReason().toLowerCase());
@@ -216,18 +210,15 @@ public class PvPListener implements Listener {
     }
 
     private void sendLeavedInPvpMessage(Player p) {
-        String message = Utils.color(messages.getPvpLeaved()).replace("%player%", p.getName());
+        String message = messages.getPvpLeaved().replace("%player%", p.getName());
         if (!message.isEmpty()) {
-            for (Player pl : Bukkit.getOnlinePlayers()) {
-                pl.sendMessage(message);
-            }
+            Utils.broadcastMessage(message);
         }
     }
 
     private void runCommands(Player leaved) {
         if (!settings.getCommandsOnLeave().isEmpty()) {
-            settings.getCommandsOnLeave().forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                    Utils.color(command).replace("%player%", leaved.getName())));
+            settings.getCommandsOnLeave().forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("%player%", leaved.getName())));
         }
     }
 
@@ -247,21 +238,8 @@ public class PvPListener implements Listener {
             if (aec.getSource() instanceof Player) {
                 return (Player) aec.getSource();
             }
-        } else if (VersionUtils.isVersion(14) && damager instanceof Firework) {
-            if (damager.hasMetadata(META_KEY)) {
-                MetadataValue metadata = null;
-                for (MetadataValue metadataValue : damager.getMetadata(META_KEY)) {
-                    if (metadataValue.getOwningPlugin() == plugin) {
-                        metadata = metadataValue;
-                        break;
-                    }
-                }
-                if (metadata != null) {
-                    damager.removeMetadata(META_KEY, plugin);
-                    return Bukkit.getPlayer((UUID) metadata.value());
-                }
-            }
         }
         return null;
     }
+
 }

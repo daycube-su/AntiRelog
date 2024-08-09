@@ -4,7 +4,6 @@ package ru.leymooo.antirelog.config;
 import ru.leymooo.annotatedyaml.Annotations.*;
 
 import ru.leymooo.annotatedyaml.Configuration;
-import ru.leymooo.annotatedyaml.ConfigurationProvider;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,7 +32,7 @@ public class Settings extends Configuration {
     @Comment({"Кулдавн для корусов во время пвп.", "https://minecraft-ru.gamepedia.com/Плод_коруса", "Значение 0 отключает кулдаун; -1 " +
             "отключает использование во время пвп"})
     @Key("chorus-cooldown")
-    private int сhorusCooldown = 7;
+    private int chorusCooldown = 7;
 
     @Comment({"Кулдавн для фейверков во время пвп. (чтобы не убегали на элитрах)", "Значение 0 отключает кулдаун; -1 отключает использование во время пвп"})
     @Key("firework-cooldown")
@@ -161,8 +160,8 @@ public class Settings extends Configuration {
         return enderPearlCooldown;
     }
 
-    public int getСhorusCooldown() {
-        return сhorusCooldown;
+    public int getChorusCooldown() {
+        return chorusCooldown;
     }
 
     public int getFireworkCooldown() {
@@ -261,7 +260,7 @@ public class Settings extends Configuration {
                 ", goldenAppleCooldown=" + goldenAppleCooldown +
                 ", enchantedGoldenAppleCooldown=" + enchantedGoldenAppleCooldown +
                 ", enderPearlCooldown=" + enderPearlCooldown +
-                ", сhorusCooldown=" + сhorusCooldown +
+                ", chorusCooldown=" + chorusCooldown +
                 ", fireworkCooldown=" + fireworkCooldown +
                 ", totemCooldown=" + totemCooldown +
                 ", pvpTime=" + pvpTime +

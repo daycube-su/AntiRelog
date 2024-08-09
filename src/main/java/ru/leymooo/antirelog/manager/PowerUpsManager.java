@@ -74,8 +74,7 @@ public class PowerUpsManager {
 
     public void disablePowerUpsWithRunCommands(Player player) {
         if (disablePowerUps(player) && !settings.getCommandsOnPowerupsDisable().isEmpty()) {
-            settings.getCommandsOnPowerupsDisable().forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                    Utils.color(command.replace("%player%", player.getName()))));
+            settings.getCommandsOnPowerupsDisable().forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("%player%", player.getName())));
             String message = settings.getMessages().getPvpStartedWithPowerups();
             if (!message.isEmpty()) {
                 player.sendMessage(Utils.color(message));

@@ -19,9 +19,6 @@ import ru.leymooo.antirelog.util.Utils;
 import ru.leymooo.antirelog.util.VersionUtils;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class PvPManager {
 
@@ -189,9 +186,9 @@ public class PvPManager {
 
     private void startPvp(Player player, boolean bypassed, boolean attacker) {
         if (!bypassed) {
-            String message = Utils.color(settings.getMessages().getPvpStarted());
+            String message = settings.getMessages().getPvpStarted();
             if (!message.isEmpty()) {
-                player.sendMessage(message);
+                Utils.sendMessage(player, message);
             }
             if (attacker && settings.isDisablePowerups()) {
                 powerUpsManager.disablePowerUpsWithRunCommands(player);
@@ -222,10 +219,7 @@ public class PvPManager {
     private boolean callPvpPreStartEvent(Player defender, Player attacker, PvPStatus pvpStatus) {
         PvpPreStartEvent pvpPreStartEvent = new PvpPreStartEvent(defender, attacker, settings.getPvpTime(), pvpStatus);
         Bukkit.getPluginManager().callEvent(pvpPreStartEvent);
-        if (pvpPreStartEvent.isCancelled()) {
-            return false;
-        }
-        return true;
+        return !pvpPreStartEvent.isCancelled();
     }
 
     private void updateAttackerAndCallEvent(Player attacker, Player defender, boolean bypassed) {
@@ -252,9 +246,9 @@ public class PvPManager {
     public void stopPvP(Player player) {
         stopPvPSilent(player);
         sendTitles(player, false);
-        String message = Utils.color(settings.getMessages().getPvpStopped());
+        String message = settings.getMessages().getPvpStopped();
         if (!message.isEmpty()) {
-            player.sendMessage(message);
+            Utils.sendMessage(player, message);
         }
         String actionBar = settings.getMessages().getPvpStoppedActionbar();
         if (!actionBar.isEmpty()) {

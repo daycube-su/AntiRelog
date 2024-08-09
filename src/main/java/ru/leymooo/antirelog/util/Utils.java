@@ -1,6 +1,11 @@
 package ru.leymooo.antirelog.util;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.platform.bukkit.BukkitComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.entity.Player;
+import ru.leymooo.antirelog.Antirelog;
 
 public class Utils {
     /**
@@ -28,18 +33,28 @@ public class Utils {
         if (last == 1) {
             return ed + a;
         }
-        if (last < 5) {
-            return ed + b;
-        }
-        return ed + c;
+        return ed + b;
     }
 
     public static String color(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
+        return BukkitComponentSerializer.legacy().serialize(MiniMessage.miniMessage().deserialize(message));
+    }
+
+    public static void sendMessage(Player player, String message) {
+        Component formattedMessage = MiniMessage.miniMessage().deserialize(message);
+        Audience audience = Antirelog.getPlugin(Antirelog.class).adventure().player(player);
+        audience.sendMessage(formattedMessage);
+    }
+
+    public static void broadcastMessage(String message) {
+        Audience audience = Antirelog.getPlugin(Antirelog.class).adventure().all();
+        Component formattedMessage = MiniMessage.miniMessage().deserialize(message);
+        audience.sendMessage(formattedMessage);
     }
 
     public static String replaceTime(String message, int time) {
         return message.replace("%time%", Integer.toString(time)).replace("%formated-sec%",
                 formatTimeUnit("секунд", "у", "ы", "", time));
     }
+
 }

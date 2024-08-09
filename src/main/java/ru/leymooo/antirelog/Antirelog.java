@@ -1,5 +1,6 @@
 package ru.leymooo.antirelog;
 
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -30,17 +31,21 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
+
 import ru.leymooo.antirelog.util.VersionUtils;
 
 public class Antirelog extends JavaPlugin {
+
     private Settings settings;
     private PvPManager pvpManager;
     private CooldownManager cooldownManager;
     private boolean protocolLib;
     private boolean worldguard;
+    private BukkitAudiences adventure;
 
     @Override
     public void onEnable() {
+        this.adventure = BukkitAudiences.create(this);
         loadConfig();
         pvpManager = new PvPManager(settings, this);
         detectPlugins();
@@ -50,6 +55,14 @@ public class Antirelog extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(new PvPListener(this, pvpManager, settings), this);
         getServer().getPluginManager().registerEvents(new CooldownListener(this, cooldownManager, pvpManager, settings), this);
+    }
+
+    @Override
+    public void onDisable() {
+        if (this.adventure != null) {
+            this.adventure.close();
+            this.adventure = null;
+        }
     }
 
     @Override
@@ -87,7 +100,7 @@ public class Antirelog extends JavaPlugin {
             getLogger().info("config.yml успешно создан");
         } else if (provider.isFileSuccessfullyLoaded()) {
             if (settings.load()) {
-                if (!((String) provider.get("config-version")).equals(settings.getConfigVersion())) {
+                if (!provider.get("config-version").equals(settings.getConfigVersion())) {
                     getLogger().info("Конфиг был обновлен. Проверьте новые значения");
                     settings.save();
                 }
@@ -101,13 +114,18 @@ public class Antirelog extends JavaPlugin {
         }
     }
 
+    public BukkitAudiences adventure() {
+        if (this.adventure == null) {
+            throw new IllegalStateException("Tried to access Adventure when the plugin was disabled!");
+        }
+        return this.adventure;
+    }
 
     private void fixFolder() {
         File oldFolder = new File(getDataFolder().getParentFile(), "Antirelog");
         if (!oldFolder.exists()) {
             return;
         }
-
 
         try {
 
@@ -121,7 +139,7 @@ public class Antirelog extends JavaPlugin {
                 }
                 //save old config
                 List<String> oldConfigLines = Files.readAllLines(oldConfig.toPath(), StandardCharsets.UTF_8);
-                String firstLine = oldConfigLines.size() > 0 ? oldConfigLines.get(0) : null;
+                String firstLine = !oldConfigLines.isEmpty() ? oldConfigLines.get(0) : null;
                 //delete old folder
                 deleteFolder(actualFolder.toPath());
 
@@ -214,4 +232,5 @@ public class Antirelog extends JavaPlugin {
     public CooldownManager getCooldownManager() {
         return cooldownManager;
     }
+
 }

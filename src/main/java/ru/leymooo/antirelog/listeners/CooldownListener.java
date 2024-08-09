@@ -77,7 +77,7 @@ public class CooldownListener implements Listener {
 
         if (isChorus(consumeItem)) {
             cooldownType = CooldownType.CHORUS;
-            cooldownTime = settings.getСhorusCooldown();
+            cooldownTime = settings.getChorusCooldown();
         }
         if (isGoldenOrEnchantedApple(consumeItem)) {
             boolean enchanted = isEnchantedGoldenApple(consumeItem);
@@ -115,7 +115,7 @@ public class CooldownListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
         if (settings.getEnderPearlCooldown() == 0 && settings.getFireworkCooldown() == 0) return;
         if (!event.hasItem()) return;
@@ -127,7 +127,7 @@ public class CooldownListener implements Listener {
                 return;
             }
             if (checkCooldown(event.getPlayer(), CooldownType.ENDER_PEARL,
-                    settings.getEnderPearlCooldown() * 1000)) {
+                    settings.getEnderPearlCooldown() * 1000L)) {
                 event.setCancelled(true);
             }
         } else if (settings.getFireworkCooldown() != 0 && isFirework(event.getItem())) {
@@ -136,7 +136,7 @@ public class CooldownListener implements Listener {
                 return;
             }
 
-            if (checkCooldown(event.getPlayer(), CooldownType.FIREWORK, settings.getFireworkCooldown() * 1000)) {
+            if (checkCooldown(event.getPlayer(), CooldownType.FIREWORK, settings.getFireworkCooldown() * 1000L)) {
                 event.setCancelled(true);
                 return;
             }
@@ -195,14 +195,13 @@ public class CooldownListener implements Listener {
 
     private void cancelEventIfInPvp(Cancellable event, CooldownType type, Player player) {
         if (pvpManager.isInPvP(player)) {
-            ((Cancellable) event).setCancelled(true);
+            event.setCancelled(true);
             String message = type == CooldownType.TOTEM ? settings.getMessages().getTotemDisabledInPvp() :
                     settings.getMessages().getItemDisabledInPvp();
             if (!message.isEmpty()) {
-                player.sendMessage(Utils.color(message));
+                Utils.sendMessage(player, message);
             }
         }
-        return;
     }
 
     private boolean checkCooldown(Player player, CooldownType cooldownType, long cooldownTime) {
@@ -213,8 +212,8 @@ public class CooldownListener implements Listener {
             String message = cooldownType == CooldownType.TOTEM ? settings.getMessages().getTotemCooldown() :
                     settings.getMessages().getItemCooldown();
             if (!message.isEmpty()) {
-                player.sendMessage(Utils.color(Utils.replaceTime(message.replace("%time%",
-                        Math.round(remaining / 1000) + ""), remainingInt)));
+                message = Utils.replaceTime(message.replace("%time%", Math.round((float) remaining / 1000) + ""), remainingInt);
+                Utils.sendMessage(player, message);
             }
             return true;
         }
@@ -224,10 +223,10 @@ public class CooldownListener implements Listener {
     private void addItemCooldownIfNeeded(Player player, CooldownType cooldownType) {
         if (pvpManager.isPvPModeEnabled()) {
             if (pvpManager.isInPvP(player)) {
-                cooldownManager.addItemCooldown(player, cooldownType, cooldownType.getCooldown(settings) * 1000);
+                cooldownManager.addItemCooldown(player, cooldownType, cooldownType.getCooldown(settings) * 1000L);
             }
         } else {
-            cooldownManager.addItemCooldown(player, cooldownType, cooldownType.getCooldown(settings) * 1000);
+            cooldownManager.addItemCooldown(player, cooldownType, cooldownType.getCooldown(settings) * 1000L);
         }
     }
 
